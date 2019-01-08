@@ -1,0 +1,42 @@
+'use strict';
+module.exports.handler=function (event,context,callback){
+
+	var co = require('co');
+	var OSS = require('ali-oss');
+	var client = new OSS({
+	   region:'oss-cn-beijing',
+	   accessKeyId: ¡®LTAIPXgOHKUaMrBo¡¯,
+	   accessKeySecret: ¡®DewGngC1IG62UWqFBJuOHlmDRt1A87¡¯,
+	   bucket:'fun-xb-theteamofxiaobing'
+		}) ;
+	co (function*(){
+		var result=yield client.list ({
+		    prefix:'tmp/'
+		});
+		var name;
+		var nameArray = result.objects;
+		for (var index=0; index < nameArray.length; index++){
+			var str =nameArray[index].name;
+			if (str.indexOf('.jpg')>0){
+				console.log(str);
+				var resize = yield client.get(str,'/tmp/example-resize.jpg',{process:'image/resize,m_fixed,w_128,h_128'});
+				
+				var del = yield client.delete(str);
+				console.log(del);
+				name=new Date().getTime()+'.jpg';
+				var put = yield client.put('resoyrce/'+name,'/tmp/example-resize.jpg',{
+				    meta :{
+					year : 2019,
+					people : 'rengxf'
+					}
+				});
+				
+			    callback(null,"New pic Name is:"+name);
+			    console.log(name);
+			}
+		}
+	}).catch (function(err){
+		console.log(err)
+	});
+	     callback (null,"Invk OSS is OK!");
+};
